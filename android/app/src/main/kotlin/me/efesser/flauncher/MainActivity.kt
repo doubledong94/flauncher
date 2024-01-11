@@ -30,6 +30,7 @@ import android.net.NetworkCapabilities
 import android.net.NetworkRequest
 import android.net.Uri
 import android.os.Build
+import android.os.Bundle
 import android.os.UserHandle
 import android.provider.Settings
 import android.util.Log
@@ -181,6 +182,15 @@ class MainActivity : FlutterActivity() {
     )
 
     private fun launchApp(packageName: String) = try {
+        val bundle = Bundle()
+        bundle.putBoolean("tasker_extra_bundle_switch", true)
+        bundle.putString("tasker_extra_bundle_guid", "Default")
+        var broadcastIntent = Intent()
+        broadcastIntent.setPackage("com.v2ray.ang");
+        broadcastIntent.setAction("com.twofortyfouram.locale.intent.action.FIRE_SETTING")
+        broadcastIntent.putExtra("com.twofortyfouram.locale.intent.extra.BUNDLE", bundle)
+        sendBroadcast(broadcastIntent)
+
         val intent = packageManager.getLeanbackLaunchIntentForPackage(packageName)
                 ?: packageManager.getLaunchIntentForPackage(packageName)
         startActivity(intent)
