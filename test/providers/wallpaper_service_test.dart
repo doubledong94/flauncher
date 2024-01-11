@@ -45,7 +45,7 @@ void main() {
       final settingsService = MockSettingsService();
       when(imagePicker.pickImage(source: ImageSource.gallery)).thenAnswer((_) => Future.value(pickedFile));
       when(fLauncherChannel.checkForGetContentAvailability()).thenAnswer((_) => Future.value(true));
-      final wallpaperService = WallpaperService(imagePicker, fLauncherChannel, MockUnsplashService())
+      final wallpaperService = WallpaperService(imagePicker, fLauncherChannel)
         ..settingsService = settingsService;
       await untilCalled(pathProviderPlatform.getApplicationDocumentsPath());
 
@@ -59,7 +59,7 @@ void main() {
     test("throws error when no file explorer installed", () async {
       final fLauncherChannel = MockFLauncherChannel();
       when(fLauncherChannel.checkForGetContentAvailability()).thenAnswer((_) => Future.value(false));
-      final wallpaperService = WallpaperService(_MockImagePicker(), fLauncherChannel, MockUnsplashService());
+      final wallpaperService = WallpaperService(_MockImagePicker(), fLauncherChannel);
       await untilCalled(pathProviderPlatform.getApplicationDocumentsPath());
 
       expect(() async => await wallpaperService.pickWallpaper(), throwsA(isInstanceOf<NoFileExplorerException>()));
@@ -80,7 +80,7 @@ void main() {
     );
     when(unsplashService.randomPhoto("test")).thenAnswer((_) => Future.value(photo));
     when(unsplashService.downloadPhoto(photo)).thenAnswer((_) => Future.value(Uint8List.fromList([0x01])));
-    final wallpaperService = WallpaperService(imagePicker, fLauncherChannel, unsplashService)
+    final wallpaperService = WallpaperService(imagePicker, fLauncherChannel)
       ..settingsService = settingsService;
     await untilCalled(pathProviderPlatform.getApplicationDocumentsPath());
 
@@ -103,12 +103,9 @@ void main() {
       Uri.parse("http://localhost/@author"),
     );
     when(unsplashService.searchPhotos("test")).thenAnswer((_) => Future.value([photo]));
-    final wallpaperService = WallpaperService(imagePicker, fLauncherChannel, unsplashService);
+    final wallpaperService = WallpaperService(imagePicker, fLauncherChannel);
     await untilCalled(pathProviderPlatform.getApplicationDocumentsPath());
 
-    final photos = await wallpaperService.searchFromUnsplash("test");
-
-    expect(photos, [photo]);
   });
 
   test("setFromUnsplash", () async {
@@ -124,11 +121,9 @@ void main() {
       Uri.parse("http://localhost/@author"),
     );
     when(unsplashService.downloadPhoto(photo)).thenAnswer((_) => Future.value(Uint8List.fromList([0x01])));
-    final wallpaperService = WallpaperService(imagePicker, fLauncherChannel, unsplashService)
+    final wallpaperService = WallpaperService(imagePicker, fLauncherChannel)
       ..settingsService = settingsService;
     await untilCalled(pathProviderPlatform.getApplicationDocumentsPath());
-
-    await wallpaperService.setFromUnsplash(photo);
 
     verify(unsplashService.downloadPhoto(photo));
     verify(settingsService.setUnsplashAuthor('{"username":"John Doe","link":"http://localhost/@author"}'));
@@ -140,7 +135,7 @@ void main() {
     final fLauncherChannel = MockFLauncherChannel();
     final unsplashService = MockUnsplashService();
     final settingsService = MockSettingsService();
-    final wallpaperService = WallpaperService(imagePicker, fLauncherChannel, unsplashService)
+    final wallpaperService = WallpaperService(imagePicker, fLauncherChannel)
       ..settingsService = settingsService;
     await untilCalled(pathProviderPlatform.getApplicationDocumentsPath());
 
@@ -158,7 +153,7 @@ void main() {
       final unsplashService = MockUnsplashService();
       final settingsService = MockSettingsService();
       when(settingsService.gradientUuid).thenReturn(null);
-      final wallpaperService = WallpaperService(imagePicker, fLauncherChannel, unsplashService)
+      final wallpaperService = WallpaperService(imagePicker, fLauncherChannel)
         ..settingsService = settingsService;
       await untilCalled(pathProviderPlatform.getApplicationDocumentsPath());
 
@@ -173,7 +168,7 @@ void main() {
       final unsplashService = MockUnsplashService();
       final settingsService = MockSettingsService();
       when(settingsService.gradientUuid).thenReturn(FLauncherGradients.grassShampoo.uuid);
-      final wallpaperService = WallpaperService(imagePicker, fLauncherChannel, unsplashService)
+      final wallpaperService = WallpaperService(imagePicker, fLauncherChannel)
         ..settingsService = settingsService;
       await untilCalled(pathProviderPlatform.getApplicationDocumentsPath());
 

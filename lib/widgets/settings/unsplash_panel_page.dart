@@ -162,8 +162,6 @@ class _SearchTabState extends State<_SearchTab> {
                       _searchResults = [];
                     });
                     try {
-                      final searchResults = await context.read<WallpaperService>().searchFromUnsplash(value);
-                      setState(() => _searchResults = searchResults);
                     } finally {
                       setState(() => enabled = true);
                     }
@@ -209,7 +207,6 @@ class _SearchTabState extends State<_SearchTab> {
                           if (enabled) {
                             setState(() => enabled = false);
                             try {
-                              await context.read<WallpaperService>().setFromUnsplash(photo);
                             } finally {
                               setState(() => enabled = true);
                             }
