@@ -24,10 +24,16 @@ import android.content.pm.*
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.drawable.Drawable
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkCapabilities
+import android.net.NetworkRequest
 import android.net.Uri
 import android.os.Build
 import android.os.UserHandle
 import android.provider.Settings
+import android.util.Log
+import android.widget.Toast
 import androidx.annotation.NonNull
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -46,6 +52,30 @@ class MainActivity : FlutterActivity() {
 
     override fun configureFlutterEngine(@NonNull flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+
+        val request = NetworkRequest.Builder()
+            .addTransportType(NetworkCapabilities.TRANSPORT_VPN)
+            .removeCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN)
+            .build()
+        val connectivityManager: ConnectivityManager? =
+            context.getSystemService(android.content.Context.CONNECTIVITY_SERVICE) as ConnectivityManager?
+
+        connectivityManager?.registerNetworkCallback(request, object  : ConnectivityManager.NetworkCallback() {
+            override fun onAvailable(network: Network) {
+                super.onAvailable(network)
+                Log.i("ydd", "Default -> Network Available")
+                android.widget.Toast.makeText(this@MainActivity, "vpn on", Toast.LENGTH_SHORT)
+                    .show()
+            }
+
+            override fun onLost(network: Network) {
+                super.onLost(network)
+                Log.i("ydd", "Default -> Connection lost")
+                android.widget.Toast.makeText(this@MainActivity, "vpn off", Toast.LENGTH_SHORT)
+                    .show()
+            }
+        })
+
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, METHOD_CHANNEL).setMethodCallHandler { call, result ->
             when (call.method) {
                 "getApplications" -> result.success(getApplications())
