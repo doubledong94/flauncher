@@ -56,7 +56,7 @@ void main() {
     });
     final fLauncherChannel = FLauncherChannel();
 
-    await fLauncherChannel.launchApp("me.efesser.flauncher");
+    await fLauncherChannel.launchApp("me.efesser.flauncher", false);
 
     expect(packageName, "me.efesser.flauncher");
   });

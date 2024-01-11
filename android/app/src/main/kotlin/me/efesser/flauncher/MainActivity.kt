@@ -50,6 +50,17 @@ private const val EVENT_CHANNEL = "me.efesser.flauncher/event"
 
 class MainActivity : FlutterActivity() {
     val launcherAppsCallbacks = ArrayList<LauncherApps.Callback>()
+    var vpnOn = false
+        get() = field
+        set(value) {
+            field = value
+        };
+
+    var v2rayStarted = false
+        get() = field
+        set(value) {
+            field = value
+        };
 
     override fun configureFlutterEngine(@NonNull flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -65,15 +76,15 @@ class MainActivity : FlutterActivity() {
             override fun onAvailable(network: Network) {
                 super.onAvailable(network)
                 Log.i("ydd", "Default -> Network Available")
-                android.widget.Toast.makeText(this@MainActivity, "vpn on", Toast.LENGTH_SHORT)
-                    .show()
+                this@MainActivity.vpnOn = true;
+                android.widget.Toast.makeText(this@MainActivity, "vpn on", Toast.LENGTH_SHORT).show()
             }
 
             override fun onLost(network: Network) {
                 super.onLost(network)
                 Log.i("ydd", "Default -> Connection lost")
-                android.widget.Toast.makeText(this@MainActivity, "vpn off", Toast.LENGTH_SHORT)
-                    .show()
+                this@MainActivity.vpnOn = false;
+                android.widget.Toast.makeText(this@MainActivity, "vpn off", Toast.LENGTH_SHORT).show()
             }
         })
 
@@ -81,7 +92,7 @@ class MainActivity : FlutterActivity() {
             when (call.method) {
                 "getApplications" -> result.success(getApplications())
                 "applicationExists" -> result.success(applicationExists(call.arguments as String))
-                "launchApp" -> result.success(launchApp(call.arguments as String))
+                "launchApp" -> result.success(launchApp(call.arguments as List<*>))
                 "openSettings" -> result.success(openSettings())
                 "openAppInfo" -> result.success(openAppInfo(call.arguments as String))
                 "uninstallApp" -> result.success(uninstallApp(call.arguments as String))
@@ -181,19 +192,39 @@ class MainActivity : FlutterActivity() {
             "sideloaded" to sideloaded,
     )
 
-    private fun launchApp(packageName: String) = try {
-        val bundle = Bundle()
-        bundle.putBoolean("tasker_extra_bundle_switch", true)
-        bundle.putString("tasker_extra_bundle_guid", "Default")
-        var broadcastIntent = Intent()
-        broadcastIntent.setPackage("com.v2ray.ang");
-        broadcastIntent.setAction("com.twofortyfouram.locale.intent.action.FIRE_SETTING")
-        broadcastIntent.putExtra("com.twofortyfouram.locale.intent.extra.BUNDLE", bundle)
-        sendBroadcast(broadcastIntent)
+    private fun launchApp(packageNameAndUseVpn: List<*>) = try {
+        val packageName:String = packageNameAndUseVpn[0] as String
+        val useVpn:Boolean = packageNameAndUseVpn[1] as Boolean
+        if (!packageName.equals("com.v2ray.ang")) {
+            if (useVpn && !vpnOn) {
+                val bundle = Bundle()
+                bundle.putBoolean("tasker_extra_bundle_switch", true)
+                bundle.putString("tasker_extra_bundle_guid", "Default")
+                var broadcastIntent = Intent()
+                broadcastIntent.setPackage("com.v2ray.ang");
+                broadcastIntent.setAction("com.twofortyfouram.locale.intent.action.FIRE_SETTING")
+                broadcastIntent.putExtra("com.twofortyfouram.locale.intent.extra.BUNDLE", bundle)
+                sendBroadcast(broadcastIntent)
+            }
+            if (!useVpn && vpnOn){
+                val bundle = Bundle()
+                bundle.putBoolean("tasker_extra_bundle_switch", false)
+                bundle.putString("tasker_extra_bundle_guid", "Default")
+                var broadcastIntent = Intent()
+                broadcastIntent.setPackage("com.v2ray.ang");
+                broadcastIntent.setAction("com.twofortyfouram.locale.intent.action.FIRE_SETTING")
+                broadcastIntent.putExtra("com.twofortyfouram.locale.intent.extra.BUNDLE", bundle)
+                sendBroadcast(broadcastIntent)
+            }
+        }
 
-        val intent = packageManager.getLeanbackLaunchIntentForPackage(packageName)
+        if (packageName.startsWith("http")) {
+            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(packageName)))
+        } else {
+            val intent = packageManager.getLeanbackLaunchIntentForPackage(packageName)
                 ?: packageManager.getLaunchIntentForPackage(packageName)
-        startActivity(intent)
+            startActivity(intent)
+        }
         true
     } catch (e: Exception) {
         false

@@ -56,6 +56,8 @@ class AppsService extends ChangeNotifier {
         case "PACKAGE_ADDED":
         case "PACKAGE_CHANGED":
           await _database.persistApps([_buildAppCompanion(event["activitiyInfo"])]);
+          final tvAppsCategory = _categoriesWithApps.map((e) => e.category).firstWhere((element) => element.name == "所有应用");
+          await addToCategory((await _database.getAppByPackage(event["activitiyInfo"]["packageName"]))[0], tvAppsCategory, shouldNotifyListeners: true);
           break;
         case "PACKAGES_AVAILABLE":
           await _database.persistApps((event["activitiesInfo"] as List<dynamic>).map(_buildAppCompanion).toList());
@@ -83,42 +85,264 @@ class AppsService extends ChangeNotifier {
       );
 
   Future<void> _initDefaultCategories() => _database.transaction(() async {
-        final tvApplications = _applications.where((element) => element.sideloaded == false);
-        final nonTvApplications = _applications.where((element) => element.sideloaded == true);
-        if (tvApplications.isNotEmpty) {
-          await addCategory("TV Applications", shouldNotifyListeners: false);
-          final tvAppsCategory =
-              _categoriesWithApps.map((e) => e.category).firstWhere((element) => element.name == "TV Applications");
-          await setCategoryType(
-            tvAppsCategory,
-            CategoryType.grid,
-            shouldNotifyListeners: false,
-          );
-          for (final app in tvApplications) {
-            await addToCategory(app, tvAppsCategory, shouldNotifyListeners: false);
-          }
+
+        final starApp = (await _database.getAppByPackage("com.starscntv.livestream.iptv"))[0];
+
+        // 所有应用
+        await addCategory("所有应用", shouldNotifyListeners: false);
+        final tvAppsCategory = _categoriesWithApps.map((e) => e.category).firstWhere((element) => element.name == "所有应用");
+        await setCategoryType(tvAppsCategory,CategoryType.grid,shouldNotifyListeners: false);
+        for (final app in _applications) {
+          await addToCategory(app, tvAppsCategory, shouldNotifyListeners: false);
         }
-        if (nonTvApplications.isNotEmpty) {
-          await addCategory(
-            "Non-TV Applications",
-            shouldNotifyListeners: false,
-          );
-          final nonTvAppsCategory =
-              _categoriesWithApps.map((e) => e.category).firstWhere((element) => element.name == "Non-TV Applications");
-          for (final app in nonTvApplications) {
-            await addToCategory(
-              app,
-              nonTvAppsCategory,
-              shouldNotifyListeners: false,
-            );
-          }
+
+        // 地方台
+        final localTv = [];
+        localTv.add(starApp);
+        await addCategory("地方台",shouldNotifyListeners: false);
+        final localTvCategory = _categoriesWithApps.map((e) => e.category).firstWhere((element) => element.name == "地方台");
+        await setCategoryType(localTvCategory,CategoryType.grid,shouldNotifyListeners: false);
+        for (final app in localTv) {
+          await addToCategory(app,localTvCategory,shouldNotifyListeners: false);
+        }
+
+        // 央视
+        final CCTV = [];
+        CCTV.add(starApp);
+        CCTV.add((await _database.getAppByPackage("https://tv.cctv.com/live/"))[0]);
+        await addCategory("央视",shouldNotifyListeners: false);
+        final CCTVCategory = _categoriesWithApps.map((e) => e.category).firstWhere((element) => element.name == "央视");
+        await setCategoryType(CCTVCategory,CategoryType.grid,shouldNotifyListeners: false);
+        for (final app in CCTV) {
+          await addToCategory(app,CCTVCategory,shouldNotifyListeners: false);
+        }
+
+        // 动画
+        final anim = [];
+        anim.add(starApp);
+        anim.add((await _database.getAppByPackage("https://www.bdys10.com/s/donghua?order=1"))[0]);
+        await addCategory("动画",shouldNotifyListeners: false);
+        final animCategory = _categoriesWithApps.map((e) => e.category).firstWhere((element) => element.name == "动画");
+        await setCategoryType(animCategory,CategoryType.grid,shouldNotifyListeners: false);
+        for (final app in anim) {
+          await addToCategory(app,animCategory,shouldNotifyListeners: false);
+        }
+
+        // 综艺
+        final varietyShow = [];
+        varietyShow.add(starApp);
+        varietyShow.add((await _database.getAppByPackage("https://www.bdys10.com/s/zongyi?area=%E4%B8%AD%E5%9B%BD%E5%A4%A7%E9%99%86&order=0"))[0]);
+        varietyShow.add((await _database.getAppByPackage("https://www.yingshi.tv/vod/show/by/time/id/3.html"))[0]);
+        await addCategory("综艺",shouldNotifyListeners: false);
+        final varietyShowCategory = _categoriesWithApps.map((e) => e.category).firstWhere((element) => element.name == "综艺");
+        await setCategoryType(varietyShowCategory,CategoryType.grid,shouldNotifyListeners: false);
+        for (final app in varietyShow) {
+          await addToCategory(app,varietyShowCategory,shouldNotifyListeners: false);
+        }
+
+        // 记录片
+        final documentary = [];
+        documentary.add(starApp);
+        documentary.add((await _database.getAppByPackage("https://www.bdys10.com/s/jilu?order=1"))[0]);
+        documentary.add((await _database.getAppByPackage("https://www.youtube.com/@FreeDocumentaryNature/playlists"))[0]);
+        documentary.add((await _database.getAppByPackage("https://www.youtube.com/@BestDoc/playlists"))[0]);
+        documentary.add((await _database.getAppByPackage("https://www.youtube.com/@DWDocumentary/playlists"))[0]);
+        documentary.add((await _database.getAppByPackage("https://www.youtube.com/@NatGeo/playlists"))[0]);
+        documentary.add((await _database.getAppByPackage("https://www.yingshi.tv/vod/show/by/time/id/5.html"))[0]);
+        await addCategory("记录片",shouldNotifyListeners: false);
+        final documentaryCategory = _categoriesWithApps.map((e) => e.category).firstWhere((element) => element.name == "记录片");
+        await setCategoryType(documentaryCategory,CategoryType.grid,shouldNotifyListeners: false);
+        for (final app in documentary) {
+          await addToCategory(app,documentaryCategory,shouldNotifyListeners: false);
+        }
+
+        // 电视剧
+        final soupOpera = [];
+        soupOpera.add(starApp);
+        soupOpera.add((await _database.getAppByPackage("https://www.bdys10.com/s/all?type=1&area=%E4%B8%AD%E5%9B%BD%E5%A4%A7%E9%99%86&order=0"))[0]);
+        soupOpera.add((await _database.getAppByPackage("https://www.youtube.com/@user-mr4qg5bw3h/playlists"))[0]);
+        soupOpera.add((await _database.getAppByPackage("https://www.youtube.com/@user-rk6sx4vp8u/playlists"))[0]);
+        soupOpera.add((await _database.getAppByPackage("https://www.youtube.com/@user-kw5no6eh4p/playlists"))[0]);
+        soupOpera.add((await _database.getAppByPackage("https://www.yingshi.tv/vod/show/by/time/id/1.html"))[0]);
+        await addCategory("电视剧",shouldNotifyListeners: false);
+        final soupOperaCategory = _categoriesWithApps.map((e) => e.category).firstWhere((element) => element.name == "电视剧");
+        await setCategoryType(soupOperaCategory,CategoryType.grid,shouldNotifyListeners: false);
+        for (final app in soupOpera) {
+          await addToCategory(app,soupOperaCategory,shouldNotifyListeners: false);
+        }
+
+        // 电影
+        final film = [];
+        film.add(starApp);
+        film.add((await _database.getAppByPackage("https://www.bdys10.com/s/all?type=0&area=%E4%B8%AD%E5%9B%BD%E5%A4%A7%E9%99%86&order=0"))[0]);
+        film.add((await _database.getAppByPackage("https://www.yingshi.tv/vod/show/by/time/id/2.html"))[0]);
+        await addCategory("电影",shouldNotifyListeners: false);
+        final filmCategory = _categoriesWithApps.map((e) => e.category).firstWhere((element) => element.name == "电影");
+        await setCategoryType(filmCategory,CategoryType.grid,shouldNotifyListeners: false);
+        for (final app in film) {
+          await addToCategory(app,filmCategory,shouldNotifyListeners: false);
+        }
+
+        // v2ray
+        final v2ray = _applications.where((element) => element.packageName == 'com.v2ray.ang');
+        await addCategory("开机后请先启动一下v2ray",shouldNotifyListeners: false);
+        final v2rayCategory = _categoriesWithApps.map((e) => e.category).firstWhere((element) => element.name == "开机后请先启动一下v2ray");
+        for (final app in v2ray) {
+          await addToCategory(app,v2rayCategory,shouldNotifyListeners: false);
         }
         _categoriesWithApps = await _database.listCategoriesWithVisibleApps();
       });
 
   Future<void> _refreshState({bool shouldNotifyListeners = true}) async {
     await _database.transaction(() async {
+      List<AppsCompanion> webApps = [];
+      webApps.add(AppsCompanion(
+        packageName: Value<String>("https://www.youtube.com/@FreeDocumentaryNature/playlists"),
+        name: Value<String>("FreeDocumentaryNature"),
+        version: Value<String>("assets/freeDocumentary-min.jpg"),
+        isWeb: Value<bool>(true),
+        useVpn: Value<bool>(true),
+      ));
+
+      webApps.add(AppsCompanion(
+        packageName: Value<String>("https://tv.cctv.com/live/"),
+        name: Value<String>("cctv"),
+        version: Value<String>("assets/cctv-min.jpg"),
+        isWeb: Value<bool>(true),
+        useVpn: Value<bool>(false),
+      ));
+
+      webApps.add(AppsCompanion(
+        packageName: Value<String>("https://www.bdys10.com/s/all?type=0&area=%E4%B8%AD%E5%9B%BD%E5%A4%A7%E9%99%86&order=0"),
+        name: Value<String>("bdys10movie"),
+        version: Value<String>("assets/bdys10movie-min.jpg"),
+        isWeb: Value<bool>(true),
+        useVpn: Value<bool>(false),
+      ));
+
+      webApps.add(AppsCompanion(
+        packageName: Value<String>("https://www.bdys10.com/s/all?type=1&area=%E4%B8%AD%E5%9B%BD%E5%A4%A7%E9%99%86&order=0"),
+        name: Value<String>("bdys10soup"),
+        version: Value<String>("assets/bdys10soupopera-min.jpg"),
+        isWeb: Value<bool>(true),
+        useVpn: Value<bool>(false),
+      ));
+
+      webApps.add(AppsCompanion(
+        packageName: Value<String>("https://www.bdys10.com/s/jilu?order=1"),
+        name: Value<String>("bdys10doc"),
+        version: Value<String>("assets/bdys10doc-min.jpg"),
+        isWeb: Value<bool>(true),
+        useVpn: Value<bool>(false),
+      ));
+
+      webApps.add(AppsCompanion(
+        packageName: Value<String>("https://www.bdys10.com/s/donghua?order=1"),
+        name: Value<String>("bdys10anim"),
+        version: Value<String>("assets/bdys10anim-min.jpg"),
+        isWeb: Value<bool>(true),
+        useVpn: Value<bool>(false),
+      ));
+
+      webApps.add(AppsCompanion(
+        packageName: Value<String>("https://www.bdys10.com/s/zongyi?area=%E4%B8%AD%E5%9B%BD%E5%A4%A7%E9%99%86&order=0"),
+        name: Value<String>("bdys10variety"),
+        version: Value<String>("assets/bdys10variety-min.jpg"),
+        isWeb: Value<bool>(true),
+        useVpn: Value<bool>(false),
+      ));
+
+      webApps.add(AppsCompanion(
+        packageName: Value<String>("https://www.youtube.com/@NatGeo/playlists"),
+        name: Value<String>("netgeo"),
+        version: Value<String>("assets/netgeo-min.jpg"),
+        isWeb: Value<bool>(true),
+        useVpn: Value<bool>(true),
+      ));
+
+      webApps.add(AppsCompanion(
+        packageName: Value<String>("https://www.youtube.com/@DWDocumentary/playlists"),
+        name: Value<String>("dwdoc"),
+        version: Value<String>("assets/dwdoc-min.jpg"),
+        isWeb: Value<bool>(true),
+        useVpn: Value<bool>(true),
+      ));
+
+      webApps.add(AppsCompanion(
+        packageName: Value<String>("https://www.youtube.com/@BestDoc/playlists"),
+        name: Value<String>("bestdoc"),
+        version: Value<String>("assets/bestdoc-min.jpg"),
+        isWeb: Value<bool>(true),
+        useVpn: Value<bool>(true),
+      ));
+
+      webApps.add(AppsCompanion(
+        packageName: Value<String>("https://www.youtube.com/@user-mr4qg5bw3h/playlists"),
+        name: Value<String>("jingxuan"),
+        version: Value<String>("assets/jingxuan-min.jpg"),
+        isWeb: Value<bool>(true),
+        useVpn: Value<bool>(true),
+      ));
+
+      webApps.add(AppsCompanion(
+        packageName: Value<String>("https://www.youtube.com/@user-rk6sx4vp8u/playlists"),
+        name: Value<String>("haoju"),
+        version: Value<String>("assets/haoju-min.jpg"),
+        isWeb: Value<bool>(true),
+        useVpn: Value<bool>(true),
+      ));
+
+      webApps.add(AppsCompanion(
+        packageName: Value<String>("https://www.youtube.com/@user-kw5no6eh4p/playlists"),
+        name: Value<String>("chuse"),
+        version: Value<String>("assets/chuse-min.jpg"),
+        isWeb: Value<bool>(true),
+        useVpn: Value<bool>(true),
+      ));
+
+      webApps.add(AppsCompanion(
+        packageName: Value<String>("https://www.yingshi.tv/vod/show/by/time/id/1.html"),
+        name: Value<String>("yingshisoup"),
+        version: Value<String>("assets/yingshisoup-min.jpg"),
+        isWeb: Value<bool>(true),
+        useVpn: Value<bool>(true),
+      ));
+
+      webApps.add(AppsCompanion(
+        packageName: Value<String>("https://www.yingshi.tv/vod/show/by/time/id/2.html"),
+        name: Value<String>("yingshimovie"),
+        version: Value<String>("assets/yingshimovie-min.jpg"),
+        isWeb: Value<bool>(true),
+        useVpn: Value<bool>(true),
+      ));
+
+      webApps.add(AppsCompanion(
+        packageName: Value<String>("https://www.yingshi.tv/vod/show/by/time/id/3.html"),
+        name: Value<String>("yingshivariety"),
+        version: Value<String>("assets/yingshivariety-min.jpg"),
+        isWeb: Value<bool>(true),
+        useVpn: Value<bool>(true),
+      ));
+
+      webApps.add(AppsCompanion(
+        packageName: Value<String>("https://www.yingshi.tv/vod/show/by/time/id/5.html"),
+        name: Value<String>("yingshidoc"),
+        version: Value<String>("assets/yingshidoc-min.jpg"),
+        isWeb: Value<bool>(true),
+        useVpn: Value<bool>(true),
+      ));
+
       final appsFromSystem = (await _fLauncherChannel.getApplications()).map(_buildAppCompanion).toList();
+
+      for (final app in appsFromSystem) {
+        if (app.packageName.value == "com.starscntv.livestream.iptv") {
+          int i  = appsFromSystem.indexOf(app);
+          appsFromSystem.remove(app);
+          appsFromSystem.insert(i, app.copyWith(useVpn: Value<bool>(true)));
+        }
+      }
+
+      appsFromSystem.addAll(webApps);
 
       final appsRemovedFromSystem = (await _database.listApplications())
           .where((app) => !appsFromSystem.any((systemApp) => systemApp.packageName.value == app.packageName))
@@ -143,7 +367,7 @@ class AppsService extends ChangeNotifier {
     }
   }
 
-  Future<void> launchApp(App app) => _fLauncherChannel.launchApp(app.packageName);
+  Future<void> launchApp(App app) => _fLauncherChannel.launchApp(app.packageName,app.useVpn);
 
   Future<void> openAppInfo(App app) => _fLauncherChannel.openAppInfo(app.packageName);
 

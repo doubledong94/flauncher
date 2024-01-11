@@ -48,8 +48,30 @@ class $AppsTable extends Apps with TableInfo<$AppsTable, App> {
         SqlDialect.postgres: '',
       }),
       defaultValue: Constant(false));
+  static const VerificationMeta _isWebMeta = const VerificationMeta('isWeb');
   @override
-  List<GeneratedColumn> get $columns => [packageName, name, version, banner, icon, hidden, sideloaded];
+  late final GeneratedColumn<bool> isWeb = GeneratedColumn<bool>('isWeb', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintsDependsOnDialect({
+        SqlDialect.sqlite: 'CHECK ("isWeb" IN (0, 1))',
+        SqlDialect.mysql: '',
+        SqlDialect.postgres: '',
+      }),
+      defaultValue: Constant(false));
+  static const VerificationMeta _useVpnMeta = const VerificationMeta('useVpn');
+  @override
+  late final GeneratedColumn<bool> useVpn = GeneratedColumn<bool>('useVpn', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintsDependsOnDialect({
+        SqlDialect.sqlite: 'CHECK ("useVpn" IN (0, 1))',
+        SqlDialect.mysql: '',
+        SqlDialect.postgres: '',
+      }),
+      defaultValue: Constant(false));
+  @override
+  List<GeneratedColumn> get $columns => [packageName, name, version, banner, icon, hidden, sideloaded, isWeb, useVpn];
   @override
   String get aliasedName => _alias ?? 'apps';
   @override
@@ -85,6 +107,12 @@ class $AppsTable extends Apps with TableInfo<$AppsTable, App> {
     if (data.containsKey('sideloaded')) {
       context.handle(_sideloadedMeta, sideloaded.isAcceptableOrUnknown(data['sideloaded']!, _sideloadedMeta));
     }
+    if (data.containsKey('isWeb')) {
+      context.handle(_isWebMeta, isWeb.isAcceptableOrUnknown(data['isWeb']!, _isWebMeta));
+    }
+    if (data.containsKey('useVpn')) {
+      context.handle(_useVpnMeta, useVpn.isAcceptableOrUnknown(data['useVpn']!, _useVpnMeta));
+    }
     return context;
   }
 
@@ -101,6 +129,8 @@ class $AppsTable extends Apps with TableInfo<$AppsTable, App> {
       icon: attachedDatabase.typeMapping.read(DriftSqlType.blob, data['${effectivePrefix}icon']),
       hidden: attachedDatabase.typeMapping.read(DriftSqlType.bool, data['${effectivePrefix}hidden'])!,
       sideloaded: attachedDatabase.typeMapping.read(DriftSqlType.bool, data['${effectivePrefix}sideloaded'])!,
+      isWeb: attachedDatabase.typeMapping.read(DriftSqlType.bool, data['${effectivePrefix}isWeb'])!,
+      useVpn: attachedDatabase.typeMapping.read(DriftSqlType.bool, data['${effectivePrefix}useVpn'])!,
     );
   }
 
@@ -113,11 +143,14 @@ class $AppsTable extends Apps with TableInfo<$AppsTable, App> {
 class App extends DataClass implements Insertable<App> {
   final String packageName;
   final String name;
-  final String version;
+  final String version;// this field represent "bannerAsset" if it is web
   final Uint8List? banner;
   final Uint8List? icon;
   final bool hidden;
   final bool sideloaded;
+  final bool isWeb;
+  final bool useVpn;
+
   const App(
       {required this.packageName,
       required this.name,
@@ -125,7 +158,10 @@ class App extends DataClass implements Insertable<App> {
       this.banner,
       this.icon,
       required this.hidden,
-      required this.sideloaded});
+      required this.sideloaded,
+      this.isWeb:false,
+      this.useVpn:false});
+
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -140,6 +176,8 @@ class App extends DataClass implements Insertable<App> {
     }
     map['hidden'] = Variable<bool>(hidden);
     map['sideloaded'] = Variable<bool>(sideloaded);
+    map['isWeb'] = Variable<bool>(isWeb);
+    map['useVpn'] = Variable<bool>(useVpn);
     return map;
   }
 
@@ -152,6 +190,8 @@ class App extends DataClass implements Insertable<App> {
       icon: icon == null && nullToAbsent ? const Value.absent() : Value(icon),
       hidden: Value(hidden),
       sideloaded: Value(sideloaded),
+      isWeb: Value(isWeb),
+      useVpn: Value(useVpn),
     );
   }
 
@@ -165,6 +205,8 @@ class App extends DataClass implements Insertable<App> {
       icon: serializer.fromJson<Uint8List?>(json['icon']),
       hidden: serializer.fromJson<bool>(json['hidden']),
       sideloaded: serializer.fromJson<bool>(json['sideloaded']),
+      isWeb: serializer.fromJson<bool>(json['isWeb']),
+      useVpn: serializer.fromJson<bool>(json['useVpn']),
     );
   }
   @override
@@ -178,6 +220,8 @@ class App extends DataClass implements Insertable<App> {
       'icon': serializer.toJson<Uint8List?>(icon),
       'hidden': serializer.toJson<bool>(hidden),
       'sideloaded': serializer.toJson<bool>(sideloaded),
+      'isWeb': serializer.toJson<bool>(isWeb),
+      'useVpn': serializer.toJson<bool>(useVpn),
     };
   }
 
@@ -188,7 +232,10 @@ class App extends DataClass implements Insertable<App> {
           Value<Uint8List?> banner = const Value.absent(),
           Value<Uint8List?> icon = const Value.absent(),
           bool? hidden,
-          bool? sideloaded}) =>
+          bool? sideloaded,
+          bool? isWeb,
+          bool? useVpn,
+          }) =>
       App(
         packageName: packageName ?? this.packageName,
         name: name ?? this.name,
@@ -197,6 +244,8 @@ class App extends DataClass implements Insertable<App> {
         icon: icon.present ? icon.value : this.icon,
         hidden: hidden ?? this.hidden,
         sideloaded: sideloaded ?? this.sideloaded,
+        isWeb: isWeb ?? this.isWeb,
+        useVpn: useVpn ?? this.useVpn,
       );
   @override
   String toString() {
@@ -208,13 +257,15 @@ class App extends DataClass implements Insertable<App> {
           ..write('icon: $icon, ')
           ..write('hidden: $hidden, ')
           ..write('sideloaded: $sideloaded')
+          ..write('isWeb: $isWeb')
+          ..write('useVpn: $useVpn')
           ..write(')'))
         .toString();
   }
 
   @override
   int get hashCode => Object.hash(
-      packageName, name, version, $driftBlobEquality.hash(banner), $driftBlobEquality.hash(icon), hidden, sideloaded);
+      packageName, name, version, $driftBlobEquality.hash(banner), $driftBlobEquality.hash(icon), hidden, sideloaded, isWeb, useVpn);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -225,7 +276,9 @@ class App extends DataClass implements Insertable<App> {
           $driftBlobEquality.equals(other.banner, this.banner) &&
           $driftBlobEquality.equals(other.icon, this.icon) &&
           other.hidden == this.hidden &&
-          other.sideloaded == this.sideloaded);
+          other.sideloaded == this.sideloaded &&
+          other.isWeb == this.isWeb) &&
+          other.useVpn == this.useVpn;
 }
 
 class AppsCompanion extends UpdateCompanion<App> {
@@ -236,6 +289,8 @@ class AppsCompanion extends UpdateCompanion<App> {
   final Value<Uint8List?> icon;
   final Value<bool> hidden;
   final Value<bool> sideloaded;
+  final Value<bool> isWeb;
+  final Value<bool> useVpn;
   const AppsCompanion({
     this.packageName = const Value.absent(),
     this.name = const Value.absent(),
@@ -244,6 +299,8 @@ class AppsCompanion extends UpdateCompanion<App> {
     this.icon = const Value.absent(),
     this.hidden = const Value.absent(),
     this.sideloaded = const Value.absent(),
+    this.isWeb = const Value.absent(),
+    this.useVpn = const Value.absent(),
   });
   AppsCompanion.insert({
     required String packageName,
@@ -253,6 +310,8 @@ class AppsCompanion extends UpdateCompanion<App> {
     this.icon = const Value.absent(),
     this.hidden = const Value.absent(),
     this.sideloaded = const Value.absent(),
+    this.isWeb = const Value.absent(),
+    this.useVpn = const Value.absent(),
   })  : packageName = Value(packageName),
         name = Value(name),
         version = Value(version);
@@ -264,6 +323,8 @@ class AppsCompanion extends UpdateCompanion<App> {
     Expression<Uint8List>? icon,
     Expression<bool>? hidden,
     Expression<bool>? sideloaded,
+    Expression<bool>? isWeb,
+    Expression<bool>? useVpn,
   }) {
     return RawValuesInsertable({
       if (packageName != null) 'package_name': packageName,
@@ -273,6 +334,8 @@ class AppsCompanion extends UpdateCompanion<App> {
       if (icon != null) 'icon': icon,
       if (hidden != null) 'hidden': hidden,
       if (sideloaded != null) 'sideloaded': sideloaded,
+      if (isWeb != null) 'isWeb': isWeb,
+      if (useVpn != null) 'useVpn': useVpn,
     });
   }
 
@@ -283,7 +346,9 @@ class AppsCompanion extends UpdateCompanion<App> {
       Value<Uint8List?>? banner,
       Value<Uint8List?>? icon,
       Value<bool>? hidden,
-      Value<bool>? sideloaded}) {
+      Value<bool>? sideloaded,
+      Value<bool>? isWeb,
+      Value<bool>? useVpn}) {
     return AppsCompanion(
       packageName: packageName ?? this.packageName,
       name: name ?? this.name,
@@ -292,6 +357,8 @@ class AppsCompanion extends UpdateCompanion<App> {
       icon: icon ?? this.icon,
       hidden: hidden ?? this.hidden,
       sideloaded: sideloaded ?? this.sideloaded,
+      isWeb: isWeb ?? this.isWeb,
+      useVpn: useVpn ?? this.useVpn,
     );
   }
 
@@ -319,6 +386,12 @@ class AppsCompanion extends UpdateCompanion<App> {
     if (sideloaded.present) {
       map['sideloaded'] = Variable<bool>(sideloaded.value);
     }
+    if (isWeb.present) {
+      map['isWeb'] = Variable<bool>(isWeb.value);
+    }
+    if (useVpn.present) {
+      map['useVpn'] = Variable<bool>(useVpn.value);
+    }
     return map;
   }
 
@@ -332,6 +405,8 @@ class AppsCompanion extends UpdateCompanion<App> {
           ..write('icon: $icon, ')
           ..write('hidden: $hidden, ')
           ..write('sideloaded: $sideloaded')
+          ..write('isWeb: $isWeb')
+          ..write('useVpn: $useVpn')
           ..write(')'))
         .toString();
   }

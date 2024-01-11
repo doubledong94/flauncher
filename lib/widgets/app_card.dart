@@ -107,7 +107,7 @@ class _AppCardState extends State<AppCard> with SingleTickerProviderStateMixin {
             transformAlignment: Alignment.center,
             transform: _scaleTransform(context),
             child: Material(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(12),
               clipBehavior: Clip.antiAlias,
               elevation: Focus.of(context).hasFocus ? 16 : 0,
               shadowColor: Colors.black,
@@ -119,7 +119,9 @@ class _AppCardState extends State<AppCard> with SingleTickerProviderStateMixin {
                     focusColor: Colors.transparent,
                     onTap: () => _onPressed(context, null),
                     onLongPress: () => _onLongPress(context, null),
-                    child: widget.application.banner != null
+                    child: widget.application.isWeb
+                        ? Ink.image(image: AssetImage(widget.application.version), fit: BoxFit.fitHeight,alignment:Alignment.centerLeft)
+                        : widget.application.banner != null
                         ? Ink.image(image: _cachedMemoryImage(widget.application.banner!), fit: BoxFit.cover)
                         : Padding(
                             padding: EdgeInsets.all(8),
@@ -175,7 +177,7 @@ class _AppCardState extends State<AppCard> with SingleTickerProviderStateMixin {
                                             computeBorderColor(_animation.value, _lastBorderColor),
                                         width: 3)
                                     : null,
-                                borderRadius: BorderRadius.circular(8),
+                                borderRadius: BorderRadius.circular(12),
                               ),
                             ),
                           ),

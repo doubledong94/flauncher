@@ -29,7 +29,7 @@ class FLauncherChannel {
   Future<bool> applicationExists(String packageName) async =>
       await _methodChannel.invokeMethod('applicationExists', packageName);
 
-  Future<void> launchApp(String packageName) async => await _methodChannel.invokeMethod('launchApp', packageName);
+  Future<void> launchApp(String packageName, bool useVpn) async => await _methodChannel.invokeMethod('launchApp', [packageName, useVpn]);
 
   Future<void> openSettings() async => await _methodChannel.invokeMethod('openSettings');
 

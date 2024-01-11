@@ -109,6 +109,7 @@ class FLauncherApp extends StatelessWidget {
               selectionHandleColor: _swatch[200],
             ),
           ),
+          debugShowCheckedModeBanner: false,
           home: Builder(
             builder: (context) => WillPopScope(
               onWillPop: () async {

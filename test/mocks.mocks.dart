@@ -306,10 +306,10 @@ class MockFLauncherChannel extends _i1.Mock implements _i9.FLauncherChannel {
         returnValue: _i10.Future<bool>.value(false),
       ) as _i10.Future<bool>);
   @override
-  _i10.Future<void> launchApp(String? packageName) => (super.noSuchMethod(
+  _i10.Future<void> launchApp(String? packageName,bool useVpn) => (super.noSuchMethod(
         Invocation.method(
           #launchApp,
-          [packageName],
+          [packageName,useVpn],
         ),
         returnValue: _i10.Future<void>.value(),
         returnValueForMissingStub: _i10.Future<void>.value(),
